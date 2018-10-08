@@ -1,0 +1,34 @@
+act
+	undetectedS, undetectedM, undetected,	% sensor
+	detectedS, detectedM, detected, 				% sensor
+	unpressedB, unpressedM, unpressed,		% button
+	pressedB, pressedM, pressed,					% button
+	moving, stopb, stopm, detect, press, stop, upC, upM, downc, resetc, up,left,
+	resume, resumeC, resumeM,
+	releasebrakeM1, releasebrakeM2m, releasebrakeM2C, releasebrakeM2;
+
+proc
+	M1 = undetectedM.(upM+resumeM).pressedM.moving.M1 + detectedM.(unpressedM+pressedM).stop.M1;
+	S1 = undetectedS.S1 + detect.S2;
+	S2 = detectedS.S1;
+	B1 = unpressedB.B1 + press.B2;
+	B2 = pressedB.B1;
+	C = upC + resumeC;
+
+init 
+	allow(
+		{ undetected, detected, unpressed, pressed, stop, resume, moving, up,left, releasebrakeM2},
+		comm(
+			{
+				undetectedS|undetectedM -> undetected,
+				detectedS|detectedM -> detected,
+				unpressedB|unpressedM -> unpressed,
+				pressedB|pressedM -> pressed,
+				stopb|stopm -> stop,
+				resumeC|resumeM -> resume,
+				upC|upM -> up,
+				releasebrakeM2m|releasebrakeM2C->releasebrakeM2
+			},
+			M1 || S1 || S2 || B1 || B2 || C
+		)
+	);
