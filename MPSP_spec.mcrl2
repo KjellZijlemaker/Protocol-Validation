@@ -1,0 +1,27 @@
+act
+	undetectedS, undetectedM, undetected,	% sensor
+	detectedS, detectedM, detected, 				% sensor
+	unpressedB, unpressedM, unpressed,		% button
+	pressedB, pressedM, pressed,					% button
+	moving, stop, detect, press;
+
+proc
+	M = undetectedM.pressedM.moving.M + (detectedM+unpressedM).stop.M;
+	S1 = undetectedS.S1 + detect.S2;
+	S2 = detectedS.S1;
+	B1 = unpressedB.B1 + press.B2;
+	B2 = pressedB.B1;
+
+init hide({undetected, detected, moving, stop, detect, unpressed, pressed, press },
+	allow(
+		{ undetected, detected, moving, stop, detect, unpressed, pressed, press },
+		comm(
+			{
+				undetectedS|undetectedM -> undetected,
+				detectedS|detectedM -> detected,
+				unpressedB|unpressedM -> unpressed,
+				pressedB|pressedM -> pressed
+			},
+			M || S1 || S2 || B1 || B2
+		))
+	);

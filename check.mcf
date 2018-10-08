@@ -1,0 +1,4 @@
+% "detected" will never be followed by "moving"
+%[detectedM.moving] false
+% "pressed" happened "detected" happened and "moving" happened should be impossible
+[true*.pressed.!unpressed*.detected.moving] false
