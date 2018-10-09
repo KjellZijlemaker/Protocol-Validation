@@ -1,34 +1,24 @@
+sort TComm = struct undetected | detectedupper | detectedlower | detectedrightmost | detectedleftmost | unpressed | pressed;
+
 act
-	undetectedS, undetectedM, undetected,	% sensor
-	detectedS, detectedM, detected, 				% sensor
-	unpressedB, unpressedM, unpressed,		% button
-	pressedB, pressedM, pressed,					% button
-	moving, stopb, stopm, detect, press, stop, upC, upM, downc, resetc, up,left,
-	resume, resumeC, resumeM,
-	releasebrakeM1, releasebrakeM2m, releasebrakeM2C, releasebrakeM2;
+	s1, r1, c1, r2, s2, c2: TComm;
+	moving, stop, detect, press;
+	enablebrake, releasebrake;
 
 proc
-	M1 = undetectedM.(upM+resumeM).pressedM.moving.M1 + detectedM.(unpressedM+pressedM).stop.M1;
-	S1 = undetectedS.S1 + detect.S2;
-	S2 = detectedS.S1;
-	B1 = unpressedB.B1 + press.B2;
-	B2 = pressedB.B1;
-	C = upC + resumeC;
+	M = r1(undetected).r2(pressed).releasebrake.moving.M + (r1(detectedupper) + r1(detectedlower)+r2(unpressed)).enablebrake.stop.M;
+	S1 = s1(undetected).S1 + detect.(s1(detectedupper) + s1(detectedlower) + s1(detectedleftmost) + s1(detectedrightmost)).S1;
+	B1 = s2(unpressed).B1 + press.B2;
+	B2 = s2(pressed).B1;
 
-init 
-	allow(
-		{ undetected, detected, unpressed, pressed, stop, resume, moving, up,left, releasebrakeM2},
+	M2 = r1(undetected).r2(pressed).releasebrake.moving.M2 + (r1(detectedleftmost) + r1(detectedrightmost)+r2(unpressed)).enablebrake.stop.M2;
+init
+	allow({ c1, c2, moving, stop, detect, press, enablebrake,releasebrake},
 		comm(
 			{
-				undetectedS|undetectedM -> undetected,
-				detectedS|detectedM -> detected,
-				unpressedB|unpressedM -> unpressed,
-				pressedB|pressedM -> pressed,
-				stopb|stopm -> stop,
-				resumeC|resumeM -> resume,
-				upC|upM -> up,
-				releasebrakeM2m|releasebrakeM2C->releasebrakeM2
+				s1|r1 -> c1,
+				s2|r2 -> c2
 			},
-			M1 || S1 || S2 || B1 || B2 || C
+			M || M2 || S1 || B1 || B2
 		)
 	);
