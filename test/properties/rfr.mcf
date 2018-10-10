@@ -1,1 +1,3 @@
-[detectedM.moving] false
+%[!pressU*.move(up)] false
+%[!(r1(detectedU)|r2(unpressedU)|r1(detectedD)|r2(unpressedD))*.stop] false
+[true*]<true>true

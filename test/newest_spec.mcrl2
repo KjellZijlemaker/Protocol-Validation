@@ -1,23 +1,31 @@
-sort TComm = struct undetected | detectedupper | detectedlower | detectedrightmost | detectedleftmost | unpressed | pressed;
+sort TComm = struct detectedU | detectedD | undetectedU | undetectedD | unpressedU | unpressedD | pressedU | pressedD;
+sort D = struct up | down | left | right;
 
 act
 	s1, r1, c1, r2, s2, c2: TComm;
-	moving, stop, detect, press;
-	enablehorizontalbrake, releasehorizontalbrake, enableverticalbrake, releaseverticalbrake;
+	move: D;
+	stop, detectU, detectD, pressU, pressD;
+	brakeON, brakeOFF;
 
 proc
-	M = r1(undetected).r2(pressed).releaseverticalbrake.moving.M + ((r1(detectedupper) + r1(detectedlower)).enableverticalbrake+(r1(detectedrightmost) + r1(detectedleftmost)).enablehorizontalbrake + r2(unpressed)).stop.M;
-	S1 = s1(undetected).S1 + detect.(s1(detectedupper) + s1(detectedlower) + s1(detectedleftmost) + s1(detectedrightmost)).S1;
-	B1 = s2(unpressed).B1 + press.B2;
-	B2 = s2(pressed).B1;
+	M1 = (r2(pressedU).r1(undetectedU)).brakeOFF.move(up).M1 + (r2(pressedD).r1(undetectedD)).brakeOFF.move(down).M1 + 
+										(r1(detectedU) + r2(unpressedU) + r1(detectedD) + r2(unpressedD)).brakeON.stop.M1;
+	
+	S1 = (s1(undetectedU)+s1(undetectedD)).S1 +
+										(detectU.s1(detectedU) + detectD.s1(detectedD)).S1;
+	
+	B1 = (s2(unpressedU)+s2(unpressedD)).B1 +
+										pressU.B2(pressedU) +
+										pressD.B2(pressedD);
+	B2(p:TComm) = s2(p).B1;
 
 init
-	allow({ c1, c2, moving, stop, detect, press, enableverticalbrake,enablehorizontalbrake, releaseverticalbrake,releasehorizontalbrake},
+	allow({ c1, c2, move, stop, detectU, detectD, pressU, pressD, brakeON, brakeOFF},
 		comm(
 			{
 				s1|r1 -> c1,
 				s2|r2 -> c2
 			},
-			M || S1 || B1 || B2
+			M1 || S1 || B1
 		)
 	);
