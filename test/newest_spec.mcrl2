@@ -8,16 +8,23 @@ act
 	brakeON, brakeOFF;
 
 proc
-	M1 = (r2(pressedU).r1(undetectedU)).brakeOFF.move(up).M1 + (r2(pressedD).r1(undetectedD)).brakeOFF.move(down).M1 + 
-										(r1(detectedU) + r2(unpressedU) + r1(detectedD) + r2(unpressedD)).brakeON.stop.M1;
+	%M1 = (r2(pressedU).r1(undetectedU)).brakeOFF.move(up).M1 + (r2(pressedD).r1(undetectedD)).brakeOFF.move(down).M1 + 
+	%									(r1(detectedU) + r2(unpressedU) + r1(detectedD) + r2(unpressedD)).brakeON.stop.M1;
+
+	%M1 = r2(pressedU).(r1(undetectedU).brakeOFF.move(up) + (r1(detectedU) + r2(unpressedU)).brakeON.stop).M1 +
+	%		r2(pressedD).(r1(undetectedD).brakeOFF.move(down) + r2(pressedD) + (r1(detectedD) + r2(unpressedD)).brakeON.stop).M1;
+
+	M = r2(pressedU).M1 + r2(pressedD).M + (r2(pressedD)+r2(unpressedU)+r1(detectedU)).M;
+	M1 = (r2(pressedU)+r1(undetectedU)).M2 + (r2(pressedD)+r2(unpressedU)+r1(detectedU)).M;
+	M2 = brakeOFF.move(up).M2 + (r2(pressedD)+r2(unpressedU)+r1(detectedU)).M;
 	
-	S1 = (s1(undetectedU)+s1(undetectedD)).S1 +
-										(detectU.s1(detectedU) + detectD.s1(detectedD)).S1;
+	S = (s1(undetectedU)+s1(undetectedD)).S +
+										(detectU.s1(detectedU) + detectD.s1(detectedD)).S;
 	
-	B1 = (s2(unpressedU)+s2(unpressedD)).B1 +
-										pressU.B2(pressedU) +
-										pressD.B2(pressedD);
-	B2(p:TComm) = s2(p).B1;
+	B = (s2(unpressedU)+s2(unpressedD)).B +
+										pressU.B1(pressedU) +
+										pressD.B1(pressedD);
+	B1(p:TComm) = s2(p).B;
 
 init
 	allow({ c1, c2, move, stop, detectU, detectD, pressU, pressD, brakeON, brakeOFF},
@@ -26,6 +33,6 @@ init
 				s1|r1 -> c1,
 				s2|r2 -> c2
 			},
-			M1 || S1 || B1
+			M || S || B
 		)
 	);
