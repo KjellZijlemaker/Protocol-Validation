@@ -14,9 +14,12 @@ proc
 	%M1 = r2(pressedU).(r1(undetectedU).brakeOFF.move(up) + (r1(detectedU) + r2(unpressedU)).brakeON.stop).M1 +
 	%		r2(pressedD).(r1(undetectedD).brakeOFF.move(down) + r2(pressedD) + (r1(detectedD) + r2(unpressedD)).brakeON.stop).M1;
 
-	M = r2(pressedU).M1 + r2(pressedD).M + (r2(unpressedU)+r1(detectedU)).M;
-	M1 = (r2(pressedU)+r1(undetectedU)).M2 + (r2(pressedD)+r2(unpressedU)+r1(detectedU)).M;
-	M2 = brakeOFF.move(up).M2 + (r2(pressedD)+r2(unpressedU)+r1(detectedU)).M;
+	M = r2(pressedU).M1 + r2(pressedD).M3 + (r2(unpressedU)+r1(detectedU)).M;
+	M1 = (r2(pressedU)+r1(undetectedU)).M2 + r2(pressedD).M3 + (r2(unpressedU)+r1(detectedU)).M;
+	M2 = brakeOFF.move(up).M2 + r2(pressedD).M3 + (r2(unpressedU)+r1(detectedU)).M;
+
+	M3 = (r2(pressedD)+r1(undetectedD)).M4 + r2(pressedU).M1 + (r2(unpressedD)+r1(detectedD)).M;
+	M4 = brakeOFF.move(down).M4 + r2(pressedU).M1 + (r2(unpressedD)+r1(detectedD)).M;
 	
 	%S = (s1(undetectedU)+s1(undetectedD)).S +
 	%									(detectU.s1(detectedU) + detectD.s1(detectedD)).S;
