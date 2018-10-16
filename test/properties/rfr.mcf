@@ -1,3 +1,8 @@
+%[true*.(detectedD+detectedU)] mu X.[!]
+%[true*.r2(pressedU).!(r2(unpressedU)&&r1(undetectedU))*.move(up)] false
 %[!pressU*.move(up)] false
-%[!(r1(detectedU)|r2(unpressedU)|r1(detectedD)|r2(unpressedD))*.stop] false
+%[!(detectU)*.brakeON] false
+%[true*.pressU.!unpressU*.!detectU]<true*.move(up)> true
+%[true*.pressU_m.!unpressU_m*.detectU_m]<brakeON> true
+%[true*.unpressU_m] mu X.(<true>true && [!brakeOFF]X)
 [true*]<true>true

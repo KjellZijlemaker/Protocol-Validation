@@ -1,49 +1,54 @@
-sort TComm = struct detectedU | detectedD | undetectedU | undetectedD | unpressedU | unpressedD | pressedU | pressedD;
 sort D = struct up | down | left | right;
 
 act
-	s1, r1, c1, r2, s2, c2: TComm;
 	move: D;
-	stop, detectU, detectD, pressU, pressD;
 	brakeON, brakeOFF;
+	pressU,unpressU,pressD,unpressD,detectU,undetectU,detectD,undetectD;
+	pressU_m,unpressU_m,pressD_m,unpressD_m,detectU_m,undetectU_m,detectD_m,undetectD_m;
+	pressU_b,unpressU_b,pressD_b,unpressD_b,detectU_s,undetectU_s,detectD_s,undetectD_s;
+	undocked_s,undocked_m,undocked, docked_s, docked_m, docked, pressUndock_b, pressUndock_m, pressUndock; %dock
+	calibrate_s, calibrate_m, calibrate, uncalibrate_s, uncalibrate_m, uncalibrate;
 
 proc
-	%M1 = (r2(pressedU).r1(undetectedU)).brakeOFF.move(up).M1 + (r2(pressedD).r1(undetectedD)).brakeOFF.move(down).M1 + 
-	%									(r1(detectedU) + r2(unpressedU) + r1(detectedD) + r2(unpressedD)).brakeON.stop.M1;
 
-	%M1 = r2(pressedU).(r1(undetectedU).brakeOFF.move(up) + (r1(detectedU) + r2(unpressedU)).brakeON.stop).M1 +
-	%		r2(pressedD).(r1(undetectedD).brakeOFF.move(down) + r2(pressedD) + (r1(detectedD) + r2(unpressedD)).brakeON.stop).M1;
-
-	M = r2(pressedU).M1 + r2(pressedD).M3 + (r2(unpressedU)+r1(detectedU)).M;
-	M1 = (r2(pressedU)+r1(undetectedU)).M2 + r2(pressedD).M3 + (r2(unpressedU)+r1(detectedU)).M;
-	M2 = brakeOFF.move(up).M2 + r2(pressedD).M3 + (r2(unpressedU)+r1(detectedU)).M;
-
-	M3 = (r2(pressedD)+r1(undetectedD)).M4 + r2(pressedU).M1 + (r2(unpressedD)+r1(detectedD)).M;
-	M4 = brakeOFF.move(down).M4 + r2(pressedU).M1 + (r2(unpressedD)+r1(detectedD)).M;
+	M0(calibrated: Bool, docked: Bool) = (calibrated && docked) -> M10 <> M(calibrated, docked);
 	
-	%S = (s1(undetectedU)+s1(undetectedD)).S +
-	%									(detectU.s1(detectedU) + detectD.s1(detectedD)).S;
+	M(calibrated: Bool, docked: Bool) = pressU_m.M1(calibrated, docked) + pressD_m.M3(calibrated, docked) + (unpressU_m+unpressD_m).M(calibrated, docked) +
+		docked_m.M0(calibrated, true) + undocked_m.M0(calibrated, false) +
+		calibrate_m.M0(true, docked) + uncalibrate_m.M0(false, docked);
+	M1(calibrated: Bool, docked: Bool) = undetectU_m.M2(calibrated, docked) + (unpressU_m+detectU_m).M(calibrated, docked);
+	M2(calibrated: Bool, docked: Bool) = (unpressU_m+detectU_m).brakeON.M(calibrated, docked) + pressD_m.M3(calibrated, docked) + brakeOFF.move(up).M2(calibrated, docked);
 
-	S = (s1(undetectedU)+s1(undetectedD)).S + detectU.s1(detectedU).S1 + detectD.s1(detectedD).S2;
-	S1 = detectU.s1(detectedU).S1 + s1(undetectedU).S;
-	S2 = detectD.s1(detectedD).S2 + s1(undetectedD).S;
-	
-	%B = (s2(unpressedU)+s2(unpressedD)).B +
-	%									pressU.B1(pressedU) +
-	%									pressD.B1(pressedD);
-	%B1(p:TComm) = s2(p).B;
+	M3(calibrated: Bool, docked: Bool) = undetectD_m.M4(calibrated, docked) + (unpressD_m+detectD_m).M(calibrated, docked);
+	M4(calibrated: Bool, docked: Bool) = (unpressD_m+detectD_m).brakeON.M(calibrated, docked) + pressU_m.M2(calibrated, docked) + brakeOFF.move(down).M4(calibrated, docked);
 
-	B = (s2(unpressedU)+s2(unpressedD)).B + pressU.s2(pressedU).B1 + pressD.s2(pressedD).B2;
-	B1 = pressU.s2(pressedU).B1 + s2(unpressedU).B;
-	B2 = pressD.s2(pressedD).B2 + s2(unpressedD).B;
+	M10 = delta;
+
+	S = (undetectU_s.detectU_s + undetectD_s.detectD_s + docked_s + undocked_s).S;
+	C = (pressU_b.unpressU_b + pressD_b.unpressD_b + calibrate_s + uncalibrate_s).C;
 
 init
-	allow({ c1, c2, move, stop, detectU, detectD, pressU, pressD, brakeON, brakeOFF},
+	allow({move, detectU, detectD, pressU, pressD, undetectU, undetectD, unpressU, unpressD, brakeON, brakeOFF,
+				docked, undocked, pressUndock, uncalibrate, calibrate},
 		comm(
 			{
-				s1|r1 -> c1,
-				s2|r2 -> c2
+				pressU_b	|pressU_m -> pressU,
+				unpressU_b	|unpressU_m -> unpressU,
+				pressD_b	|pressD_m -> pressD,
+				unpressD_b	|unpressD_m -> unpressD,
+
+				detectU_s	|detectU_m -> detectU,
+				undetectU_s	|undetectU_m -> undetectU,
+				detectD_s	|detectD_m -> detectD,
+				undetectD_s	|undetectD_m -> undetectD,
+
+				undocked_s	|undocked_m -> undocked,
+				docked_s	|docked_m -> docked,
+				pressUndock_b	|pressUndock_m -> pressUndock,
+
+				uncalibrate_s	|uncalibrate_m -> uncalibrate,
+				calibrate_s		|calibrate_m -> calibrate
 			},
-			M || S || B
+			M0(false, true) || S || C
 		)
 	);
