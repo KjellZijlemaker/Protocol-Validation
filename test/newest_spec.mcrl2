@@ -26,29 +26,25 @@ proc
 	M3(calibrated: Bool, docked: Bool) = undetectD_m.M4(calibrated, docked) + (unpressD_m+detectD_m).M0(calibrated, docked);
 	M4(calibrated: Bool, docked: Bool) = (unpressD_m+detectD_m).brakeON.M0(calibrated, docked) + pressU_m.M1(calibrated, docked) + brakeOFF.move(down).M4(calibrated, docked);
 
-	M10(rightmost: Bool, toplimit: Bool) = undocked_m.M0(true, false) +
-											%(detectL_m + undetectL_m + undetectR_m).M10(false, toplimit) +
-											%detectR_m.M10(true, toplimit) +
-											%detectU_m.M10(rightmost, true) + undetectU_m.M10(rightmost, false) +
-											(rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
+	M10(rightmost: Bool, toplimit: Bool) = (rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
 											(rightmost && !toplimit) -> M40 <>  								% up down
 											(!rightmost && toplimit) -> M20(rightmost, toplimit) <> delta;  	% left right
 
-	M40 = pressU_m.M41 + pressD_m.M42 + (unpressU_m+unpressD_m).M10(true, false);
+	M40 = pressU_m.M41 + pressD_m.M43 + (unpressU_m+unpressD_m).M10(true, false);
 	M41 = undetectU_m.M42 + unpressU_m.M10(true, false)+detectU_m.M10(true, true);
 	M42 = brakeOFF.move(up).M42 +
-			unpressU_m.brakeON.M0(true, false) +
-			detectU_m.brakeON.M0(true, true) +
+			unpressU_m.brakeON.M10(true, false) +
+			detectU_m.brakeON.M10(true, true) +
 			pressD_m.M43;
 
 	M43 = undetectD_m.M44 + unpressD_m.M10(true, false)+detectD_m.M10(true, false);
 	M44 = brakeOFF.move(down).M44 +
-			unpressD_m.brakeON.M0(true, false) +
-			detectD_m.brakeON.M0(true, false) +
+			unpressD_m.brakeON.M10(true, false) +
+			detectD_m.brakeON.M10(true, false) +
 			pressU_m.M41; 
 
 	M20(rightmost: Bool, toplimit: Bool) = pressU_m.M21(rightmost, toplimit) + pressD_m.M23(rightmost, toplimit) + (unpressU_m+unpressD_m).M10(false, true);
-	M21(rightmost: Bool, toplimit: Bool) = undetectL_m.M22(rightmost, toplimit) + (unpressU_m+detectL_m).M10(false, true);
+	M21(rightmost: Bool, toplimit: Bool) = undetectL_m.M22(rightmost, toplimit) + unpressU_m.M10(rightmost, toplimit)+detectL_m.M10(false, true);
 	M22(rightmost: Bool, toplimit: Bool) = brakeOFF.move(left).M22(false, true) +
 											unpressU_m.M10(rightmost, toplimit) +
 											detectL_m.brakeON.M10(rightmost, toplimit) +
@@ -60,7 +56,8 @@ proc
 											detectR_m.brakeON.M10(true, toplimit) +
 											pressU_m.M21(rightmost, toplimit);
 
-	M30(rightmost: Bool, toplimit: Bool) = pressD_m.M43 + pressU_m.M21(rightmost, toplimit);
+	M30(rightmost: Bool, toplimit: Bool) = pressD_m.M43 + pressU_m.M21(rightmost, toplimit) +
+											(unpressD_m+unpressU_m).M10(rightmost, toplimit);
 
 
 	S = (undetectU_s.detectU_s + undetectD_s.detectD_s +
