@@ -13,9 +13,9 @@ act
 
 proc
 
-	M0(calibrated: Bool, docked: Bool) = (docked_m.M0(calibrated, true) + undocked_m.M0(calibrated, false) +
-										pressReset_m.M0(docked, docked)) +
-						(calibrated && docked) -> M10(true, false) <> M(calibrated, docked);
+	M0(calibrated: Bool, docked: Bool) = %docked_m.M0(calibrated, true) + undocked_m.M0(calibrated, false) +
+										%pressReset_m.M0(docked, docked)) +
+						(false && docked) -> M10(true, false) <> M(calibrated, docked);
 	
 	M(calibrated: Bool, docked: Bool) = pressU_m.M1(calibrated, docked) +
 										pressD_m.M3(calibrated, docked) +
@@ -26,9 +26,12 @@ proc
 	M3(calibrated: Bool, docked: Bool) = undetectD_m.M4(calibrated, docked) + (unpressD_m+detectD_m).M0(calibrated, docked);
 	M4(calibrated: Bool, docked: Bool) = (unpressD_m+detectD_m).brakeON.M0(calibrated, docked) + pressU_m.M1(calibrated, docked) + brakeOFF.move(down).M4(calibrated, docked);
 
-	M10(rightmost: Bool, toplimit: Bool) = (rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
+	M10(rightmost: Bool, toplimit: Bool) = undocked_m.MX(rightmost, toplimit) +
+											(rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
 											(rightmost && !toplimit) -> M40 <>  								% up down
 											(!rightmost && toplimit) -> M20(rightmost, toplimit) <> delta;  	% left right
+
+	MX(rightmost: Bool, toplimit: Bool) = rightmost -> M0(true, false) <> M10(rightmost, toplimit);
 
 	M40 = pressU_m.M41 + pressD_m.M43 + (unpressU_m+unpressD_m).M10(true, false);
 	M41 = undetectU_m.M42 + unpressU_m.M10(true, false)+detectU_m.M10(true, true);
