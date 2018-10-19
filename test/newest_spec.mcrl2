@@ -10,12 +10,16 @@ act
 	detectL_s, detectL_m, detectL, detectR_s, detectR_m, detectR;
 	undetectL_s, undetectL_m, undetectL, undetectR_s, undetectR_m, undetectR;
 	pressReset_b, pressReset_m, pressReset;
+	pressStop_b, pressStop_m, pressStop;
+	pressResume_b, pressResume_m, pressResume;
 
 proc
 
-	M0(calibrated: Bool, docked: Bool) = %docked_m.M0(calibrated, true) + undocked_m.M0(calibrated, false) +
-										%pressReset_m.M0(docked, docked)) +
-						(false && docked) -> M10(true, false) <> M(calibrated, docked);
+	M0(calibrated: Bool, docked: Bool) =
+										docked_m.M0(calibrated, true) +
+										undocked_m.M0(calibrated, false) +
+										pressReset_m.M0(docked, docked) +
+						(calibrated && docked) -> M10(true, false) <> M(calibrated, docked);
 	
 	M(calibrated: Bool, docked: Bool) = pressU_m.M1(calibrated, docked) +
 										pressD_m.M3(calibrated, docked) +
@@ -26,11 +30,13 @@ proc
 	M3(calibrated: Bool, docked: Bool) = undetectD_m.M4(calibrated, docked) + (unpressD_m+detectD_m).M0(calibrated, docked);
 	M4(calibrated: Bool, docked: Bool) = (unpressD_m+detectD_m).brakeON.M0(calibrated, docked) + pressU_m.M1(calibrated, docked) + brakeOFF.move(down).M4(calibrated, docked);
 
-	M10(rightmost: Bool, toplimit: Bool) = undocked_m.MX(rightmost, toplimit) +
+	M10(rightmost: Bool, toplimit: Bool) = pressStop_m.brakeOFF.MEmergency +
+											undocked_m.MX(rightmost, toplimit) +
 											(rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
 											(rightmost && !toplimit) -> M40 <>  								% up down
 											(!rightmost && toplimit) -> M20(rightmost, toplimit) <> delta;  	% left right
 
+	MEmergency = brakeOFF.MEmergency + pressResume_m.brakeON.M0(true, true); % true true because emergency mode happens only in docked and calibrated state
 	MX(rightmost: Bool, toplimit: Bool) = rightmost -> M0(true, false) <> M10(rightmost, toplimit);
 
 	M40 = pressU_m.M41 + pressD_m.M43 + (unpressU_m+unpressD_m).M10(true, false);
@@ -66,11 +72,11 @@ proc
 	S = (undetectU_s.detectU_s + undetectD_s.detectD_s +
 						undetectL_s.detectL_s + undetectR_s.detectR_s +
 						undocked_s.docked_s).S;
-	C = (pressU_b.unpressU_b + pressD_b.unpressD_b + pressReset_b).C;
+	C = (pressU_b.unpressU_b + pressD_b.unpressD_b + pressReset_b + pressStop_b.pressResume_b).C;
 
 init
 	allow({move, detectU, detectD, pressU, pressD, undetectU, undetectD, unpressU, unpressD, brakeON, brakeOFF,
-				docked, undocked, pressUndock, pressReset, detectL, detectR, undetectL, undetectR},
+				docked, undocked, pressUndock, pressReset, detectL, detectR, undetectL, undetectR, pressStop, pressResume},
 		comm(
 			{
 				pressU_b	|pressU_m -> pressU,
@@ -79,6 +85,8 @@ init
 				unpressD_b	|unpressD_m -> unpressD,
 				pressUndock_b	|pressUndock_m -> pressUndock,
 				pressReset_b	|pressReset_m -> pressReset,
+				pressStop_b		|pressStop_m -> pressStop,
+				pressResume_b	|pressResume_m -> pressResume,
 				
 				detectU_s	|detectU_m -> detectU,
 				undetectU_s	|undetectU_m -> undetectU,
