@@ -24,54 +24,57 @@ proc
 	M(calibrated: Bool, docked: Bool) = pressU_m.M1(calibrated, docked) +
 										pressD_m.M3(calibrated, docked) +
 										(unpressU_m+unpressD_m).M0(calibrated, docked);
-	M1(calibrated: Bool, docked: Bool) = undetectU_m.M2(calibrated, docked) + (unpressU_m+detectU_m).M0(calibrated, docked);
-	M2(calibrated: Bool, docked: Bool) = (unpressU_m+detectU_m).brakeON.M0(calibrated, docked) + pressD_m.M3(calibrated, docked) + brakeOFF.move(up).M2(calibrated, docked);
+	M1(calibrated: Bool, docked: Bool) = undetectU_m.brakeOFF.M2(calibrated, docked) + (unpressU_m+detectU_m).M0(calibrated, docked);
+	M2(calibrated: Bool, docked: Bool) = move(up).M2(calibrated, docked) +
+										(unpressU_m+detectU_m).brakeON.M0(calibrated, docked) +
+										pressD_m.brakeON.M3(calibrated, docked);
 
-	M3(calibrated: Bool, docked: Bool) = undetectD_m.M4(calibrated, docked) + (unpressD_m+detectD_m).M0(calibrated, docked);
-	M4(calibrated: Bool, docked: Bool) = (unpressD_m+detectD_m).brakeON.M0(calibrated, docked) + pressU_m.M1(calibrated, docked) + brakeOFF.move(down).M4(calibrated, docked);
+	M3(calibrated: Bool, docked: Bool) = undetectD_m.brakeOFF.M4(calibrated, docked) + (unpressD_m+detectD_m).M0(calibrated, docked);
+	M4(calibrated: Bool, docked: Bool) = move(down).M4(calibrated, docked) +
+										(unpressD_m+detectD_m).brakeON.M0(calibrated, docked) +
+										pressU_m.brakeON.M1(calibrated, docked);
 
-	M10(rightmost: Bool, toplimit: Bool) = pressStop_m.brakeOFF.MEmergency +
+	M10(rightmost: Bool, toplimit: Bool) = pressStop_m.brakeOFF.pressResume_m.brakeON.M0(true, true) + % true true because emergency mode happens only in docked and calibrated state
 											undocked_m.MX(rightmost, toplimit) +
 											(rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
 											(rightmost && !toplimit) -> M40 <>  								% up down
 											(!rightmost && toplimit) -> M20(rightmost, toplimit) <> delta;  	% left right
 
-	MEmergency = brakeOFF.MEmergency + pressResume_m.brakeON.M0(true, true); % true true because emergency mode happens only in docked and calibrated state
 	MX(rightmost: Bool, toplimit: Bool) = rightmost -> M0(true, false) <> M10(rightmost, toplimit);
 
 	M40 = pressU_m.M41 + pressD_m.M43 + (unpressU_m+unpressD_m).M10(true, false);
-	M41 = undetectU_m.M42 + unpressU_m.M10(true, false)+detectU_m.M10(true, true);
-	M42 = brakeOFF.move(up).M42 +
+	M41 = undetectU_m.brakeOFF.M42 + unpressU_m.M10(true, false)+detectU_m.M10(true, true);
+	M42 = move(up).M42 +
 			unpressU_m.brakeON.M10(true, false) +
 			detectU_m.brakeON.M10(true, true) +
-			pressD_m.M43;
+			pressD_m.brakeON.M43;
 
-	M43 = undetectD_m.M44 + unpressD_m.M10(true, false)+detectD_m.M10(true, false);
-	M44 = brakeOFF.move(down).M44 +
+	M43 = undetectD_m.brakeOFF.M44 + unpressD_m.M10(true, false)+detectD_m.M10(true, false);
+	M44 = move(down).M44 +
 			unpressD_m.brakeON.M10(true, false) +
 			detectD_m.brakeON.M10(true, false) +
-			pressU_m.M41; 
+			pressU_m.brakeON.M41; 
 
 	M20(rightmost: Bool, toplimit: Bool) = pressU_m.M21(rightmost, toplimit) + pressD_m.M23(rightmost, toplimit) + (unpressU_m+unpressD_m).M10(false, true);
-	M21(rightmost: Bool, toplimit: Bool) = undetectL_m.M22(rightmost, toplimit) + unpressU_m.M10(rightmost, toplimit)+detectL_m.M10(false, true);
-	M22(rightmost: Bool, toplimit: Bool) = brakeOFF.move(left).M22(false, true) +
-											unpressU_m.M10(rightmost, toplimit) +
+	M21(rightmost: Bool, toplimit: Bool) = undetectL_m.brakeOFF.M22(rightmost, toplimit) + unpressU_m.M10(rightmost, toplimit)+detectL_m.M10(false, true);
+	M22(rightmost: Bool, toplimit: Bool) = move(left).M22(false, true) +
+											unpressU_m.brakeON.M10(rightmost, toplimit) +
 											detectL_m.brakeON.M10(rightmost, toplimit) +
-											pressD_m.M23(rightmost, toplimit);
+											pressD_m.brakeON.M23(rightmost, toplimit);
 
-	M23(rightmost: Bool, toplimit: Bool) = undetectR_m.M24(rightmost, toplimit) + unpressD_m.M10(rightmost, toplimit)+detectR_m.M10(true, toplimit);
-	M24(rightmost: Bool, toplimit: Bool) = brakeOFF.move(right).M24(rightmost, toplimit) +
+	M23(rightmost: Bool, toplimit: Bool) = undetectR_m.brakeOFF.M24(rightmost, toplimit) + unpressD_m.M10(rightmost, toplimit)+detectR_m.M10(true, toplimit);
+	M24(rightmost: Bool, toplimit: Bool) = move(right).M24(rightmost, toplimit) +
 											unpressD_m.brakeON.M10(rightmost, toplimit) +
 											detectR_m.brakeON.M10(true, toplimit) +
-											pressU_m.M21(rightmost, toplimit);
+											pressU_m.brakeON.M21(rightmost, toplimit);
 
 	M30(rightmost: Bool, toplimit: Bool) = pressD_m.M43 + pressU_m.M21(rightmost, toplimit) +
 											(unpressD_m+unpressU_m).M10(rightmost, toplimit);
 
 
 	S = (undetectU_s.detectU_s + undetectD_s.detectD_s +
-						undetectL_s.detectL_s + undetectR_s.detectR_s +
-						undocked_s.docked_s).S;
+						undetectL_s.detectL_s + undetectR_s.detectR_s).S;
+	SS = docked_s.undocked_s.SS;
 	C = (pressU_b.unpressU_b + pressD_b.unpressD_b + pressReset_b + pressStop_b.pressResume_b).C;
 
 init
@@ -101,6 +104,6 @@ init
 				undocked_s	|undocked_m -> undocked,
 				docked_s	|docked_m -> docked
 			},
-			M0(false, true) || S || C
+			M0(false, true) || S || SS || C
 		)
 	);
