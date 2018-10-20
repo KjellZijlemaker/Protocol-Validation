@@ -31,16 +31,14 @@ proc
 	M4(calibrated: Bool, docked: Bool) = move(down).M4(calibrated, docked) +
 										(unpressD_m.detectD_m+detectD_m).brakeON(V).M0(calibrated, docked);
 
-	M10(rightmost: Bool, toplimit: Bool) = pressStop_m.MS(rightmost, toplimit) +
-											pressUndock_m.undocked_m.MX(rightmost, toplimit) +
+	M10(rightmost: Bool, toplimit: Bool) = pressStop_m.brakeOFF(H).pressResume_m.brakeON(H).M0(true, true) +
+											pressUndock_m.MX(rightmost, toplimit) +
 											(rightmost && toplimit) -> M30(rightmost, toplimit) <>   			% left down
 											(rightmost && !toplimit) -> M40 <>  								% up down
 											(!rightmost && toplimit) -> M20(rightmost, toplimit) <> delta;  	% left right
 
-	MS(rightmost: Bool, toplimit: Bool) = !rightmost -> brakeOFF(H).pressResume_m.brakeON(H).M0(true, true) <> % true true because emergency mode happens only in docked and calibrated state
-														pressResume_m.M10(rightmost, toplimit);
-	MX(rightmost: Bool, toplimit: Bool) = rightmost -> M0(true, false) <>
-														docked_m.M10(rightmost, toplimit);
+	MX(rightmost: Bool, toplimit: Bool) = rightmost -> undocked_m.M0(true, false) <>
+														M10(rightmost, toplimit);
 
 	M40 = pressU_m.M41 + pressD_m.M43 + (unpressU_m+unpressD_m).M10(true, false);
 	M41 = undetectU_m.brakeOFF(V).M42 + unpressU_m.M10(true, false)+detectU_m.M10(true, true);

@@ -1,8 +1,14 @@
-%[true*.(detectedD+detectedU)] mu X.[!]
-%[true*.r2(pressedU).!(r2(unpressedU)&&r1(undetectedU))*.move(up)] false
 %[!pressU*.move(up)] false
-%[!(detectU)*.brakeON] false
 %[true*.pressU.!unpressU*.!detectU]<true*.move(up)> true
-%[true*.pressU_m.!unpressU_m*.detectU_m]<brakeON> true
-%[true*.unpressU_m] mu X.(<true>true && [!brakeOFF]X)
-[true*]<true>true
+%[true*.pressU.!unpressU*.detectU]<brakeON(V)> true
+%[true*.move(up).!(detectU || unpressU)*.unpressU] mu X.(<true>true && [!brakeON(V)]X)
+
+%[true*]<true>true
+%[true*.detectD.!pressD*.move(down)] false
+%[true*.pressStop] mu X.[!brakeOFF(H)]X
+
+
+%[true*.undocked.!docked*.move(left)] false
+[true*.pressResume]<brakeON(H)>true
+
+%[true*.(move(left).unpressU + move(left).detectL).!(pressUndock && pressD && pressU && pressStop)*.undocked] false
